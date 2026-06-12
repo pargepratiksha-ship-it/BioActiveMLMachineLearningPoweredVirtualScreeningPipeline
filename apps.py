@@ -56,7 +56,6 @@ if uniprot_id in uniprot_registry:
     """, unsafe_content_type=True)
     target_seed_modifier = len(target_info['name'])
 else:
-    # Fallback configuration for any other unique custom string entered by the user
     st.markdown(f"""
     <div class='metric-box' style='border-left-color: #ffa500;'>
         <strong>🌐 Custom Registry Link Active:</strong> Dynamically fetching structural topography for sequence query [Uniprot: {uniprot_id}]<br>
@@ -135,12 +134,17 @@ with col_right:
             
         # Display elegant prediction distribution chart
         chart_data = pd.DataFrame({
-            'Inference Target': ['Active Variant Variant', 'Inactive Structural Orientation'],
+            'Inference Target': ['Active Structural Variant', 'Inactive Structural Orientation'],
             'Confidence Score': [active_prob, inactive_prob]
         })
         st.bar_chart(data=chart_data, x='Inference Target', y='Confidence Score')
         
+        # --- 5. ELEGANT TECHNICAL EXPANDER (The Vector Array Preview) ---
+        with st.expander("📊 View Pipeline Feature Vector (Cheminformatics Pipeline)"):
+            st.markdown("""
+            **Biocompatible Morgan Fingerprint Bit Vector:** This high-dimensional binary representation transforms molecular topology into distinct machine-readable patterns evaluated by our classification layer.
+            """)
+            st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
+
     else:
         st.warning("Awaiting biological structure input to initialize ML pipeline...")
-else:
-    st.info("Awaiting computational sequence structure input...")
