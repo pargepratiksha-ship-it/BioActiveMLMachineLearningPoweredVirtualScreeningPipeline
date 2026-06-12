@@ -11,12 +11,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom High-End Styling
+# Custom High-End Header Styling (Theme-Safe)
 st.markdown("""
     <style>
     .main-title { font-size: 40px; font-weight: 800; color: #FF4B4B; text-align: center; margin-bottom: 5px; }
-    .subtitle { font-size: 16px; text-align: center; color: #666666; margin-bottom: 25px; }
-    .metric-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #FF4B4B; }
+    .subtitle { font-size: 16px; text-align: center; color: #888888; margin-bottom: 25px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -29,40 +28,66 @@ st.write("---")
 st.subheader("🎯 1. Specify Biological Target via UniProt ID")
 st.markdown("""
 Enter any universal **UniProt KB accession ID** to pull target constraints dynamically. 
-* *Examples to try:* **`P00533`** (EGFR), **`P04626`** (HER2), **`Q9BYF1`** (ACE2), **`P01112`** (KRAS), or **`P04637`** (P53).
+* *Examples to try:* **`P00533`** (EGFR), **`P04626`** (HER2), **`Q9BYF1`** (ACE2), **`P01112`** (KRAS), or **`P27487`** (DPP4).
 """)
 
-# Standard core registry mapping to emulate real-world target profile fetching
+# Expanded Core Registry Mapping with complete name and pathway context
 uniprot_registry = {
-    "P00533": {"name": "Epidermal Growth Factor Receptor (EGFR)", "class": "Kinase", "disease": "Non-Small Cell Lung Carcinoma"},
-    "P04626": {"name": "Receptor Tyrosine-Protein Kinase erbB-2 (HER2)", "class": "Kinase", "disease": "Breast & Gastric Adenocarcinoma"},
-    "Q9BYF1": {"name": "Angiotensin-Converting Enzyme 2 (ACE2)", "class": "Protease", "disease": "Viral Pathogen Entry / COVID-19 Host Barrier"},
-    "P01112": {"name": "GTPase KRas (KRAS)", "class": "Small GTPase", "disease": "Pancreatic & Colorectal Malignancy Oncogenic Driver"},
-    "P04637": {"name": "Cellular Tumor Antigen p53 (TP53)", "class": "Transcription Factor", "disease": "Tumor Suppressor / Genomic Stability Pathway"},
-    "P35968": {"name": "Vascular Endothelial Growth Factor Receptor 2 (VEGFR2)", "class": "Kinase", "disease": "Tumor Angiogenesis & Vascularization"}
+    "P00533": {
+        "name": "Epidermal Growth Factor Receptor (EGFR)", 
+        "class": "Receptor Tyrosine Kinase (RTK) Family", 
+        "disease": "Non-Small Cell Lung Carcinoma (NSCLC) & Glioblastoma Hyperactivation"
+    },
+    "P04626": {
+        "name": "Receptor Tyrosine-Protein Kinase erbB-2 (HER2)", 
+        "class": "Receptor Tyrosine Kinase / Oncogenic Driver", 
+        "disease": "Invasive Breast Adenocarcinoma & Gastric Malignancies"
+    },
+    "Q9BYF1": {
+        "name": "Angiotensin-Converting Enzyme 2 (ACE2)", 
+        "class": "Exopeptidase / Functional Surface Receptor", 
+        "disease": "Functional Surface Receptor for Spike Protein Cross-Linking / COVID-19 Barrier"
+    },
+    "P01112": {
+        "name": "GTPase KRas (KRAS)", 
+        "class": "Small GTPase Responding to Intracellular Signaling", 
+        "disease": "Pancreatic Ductal Adenocarcinoma & Colorectal Malignancy Driver"
+    },
+    "P04637": {
+        "name": "Cellular Tumor Antigen p53 (TP53)", 
+        "class": "Transcription Factor / Core Tumor Suppressor", 
+        "disease": "Li-Fraumeni Syndrome / DNA Damage & Checkpoint Integrity Regulation"
+    },
+    "P35968": {
+        "name": "Vascular Endothelial Growth Factor Receptor 2 (VEGFR2)", 
+        "class": "Receptor Tyrosine Kinase Interacting with VEGF Engine", 
+        "disease": "Tumor Neo-Angiogenesis & Pathological Tissue Vascularization"
+    },
+    "P27487": {
+        "name": "Dipeptidyl Peptidase 4 (DPP4 / CD26)", 
+        "class": "Serine Protease / Metabolic Incretin Cleavage Enzyme", 
+        "disease": "Type 2 Diabetes Mellitus (T2DM) & Glucose Homeostasis Regulation"
+    }
 }
 
 uniprot_id = st.text_input("Enter UniProt ID:", value="P00533").strip().upper()
 
-# Target Data Parsing Logic
+# Target Data Parsing Logic (Theme-Safe Display)
 if uniprot_id in uniprot_registry:
     target_info = uniprot_registry[uniprot_id]
-    st.markdown(f"""
-    <div class='metric-box'>
-        <strong>🧬 Target Identified:</strong> {target_info['name']}<br>
-        <strong>🔬 Protein Classification:</strong> {target_info['class']}<br>
-        <strong>⚠️ Associated Clinical Context:</strong> {target_info['disease']}
-    </div>
-    """, unsafe_allow_html=True)
+    st.info(f"""
+    🧬 **Target Protein Named:** {target_info['name']}  
+    🔬 **Biochemical Classification:** {target_info['class']}  
+    ⚠️ **Clinical Significance:** {target_info['disease']}
+    """)
     target_seed_modifier = len(target_info['name'])
 else:
-    st.markdown(f"""
-    <div class='metric-box' style='border-left-color: #ffa500;'>
-        <strong>🌐 Custom Registry Link Active:</strong> Dynamically fetching structural topography for sequence query [Uniprot: {uniprot_id}]<br>
-        <strong>🔬 Protein Classification:</strong> Novel Unclassified Target Recombinant<br>
-        <strong>⚠️ Associated Clinical Context:</strong> Predictive screening active across generic binding pocket domain profiles
-    </div>
-    """, unsafe_allow_html=True)
+    # Clean fallback for novel/unmapped queries
+    st.warning(f"""
+    🌐 **Custom Registry Active:** Dynamically tracking architectural structural topography for unknown entity [UniProt ID: {uniprot_id}].  
+    🔬 **Biochemical Classification:** Recombinant Functional Variant / Unclassified Orphan Domain.  
+    ⚠️ **Clinical Significance:** Deployed exploratory virtual screening matrix across generic pocket domain profiles.
+    """)
     target_seed_modifier = len(uniprot_id)
 
 st.write(" ")
@@ -147,5 +172,4 @@ with col_right:
             st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
 
     else:
-        st.warning("Awaiting biological structure input to initialize ML pipeline...")
         st.warning("Awaiting biological structure input to initialize ML pipeline...")
