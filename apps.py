@@ -19,6 +19,10 @@ st.markdown("""
     .metric-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #FF4B4B; }
     </style>
 """, unsafe_allow_html=True)
+
+# --- 2. HEADER BLOCK ---
+st.markdown("<div class='main-title'>🧬 BioActive-ML: Virtual Screening Pipeline</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Dynamic UniProt Target Mapping & Machine Learning-Driven Bioactivity Inference</div>", unsafe_allow_html=True)
 st.write("---")
 
 # --- 3. THE CENTERPIECE: DYNAMIC UNIPROT ID SEARCH BAR ---
@@ -49,7 +53,7 @@ if uniprot_id in uniprot_registry:
         <strong>🔬 Protein Classification:</strong> {target_info['class']}<br>
         <strong>⚠️ Associated Clinical Context:</strong> {target_info['disease']}
     </div>
-    """, unsafe_content_type=True)
+    """, unsafe_allow_html=True)
     target_seed_modifier = len(target_info['name'])
 else:
     st.markdown(f"""
@@ -58,7 +62,7 @@ else:
         <strong>🔬 Protein Classification:</strong> Novel Unclassified Target Recombinant<br>
         <strong>⚠️ Associated Clinical Context:</strong> Predictive screening active across generic binding pocket domain profiles
     </div>
-    """, unsafe_content_type=True)
+    """, unsafe_allow_html=True)
     target_seed_modifier = len(uniprot_id)
 
 st.write(" ")
@@ -135,7 +139,7 @@ with col_right:
         })
         st.bar_chart(data=chart_data, x='Inference Target', y='Confidence Score')
         
-        # --- 5. ELEGANT TECHNICAL EXPANDER (The Vector Array Preview) ---
+        # --- 5. TECHNICAL EXPANDER (The Vector Array Preview) ---
         with st.expander("📊 View Pipeline Feature Vector (Cheminformatics Pipeline)"):
             st.markdown("""
             **Biocompatible Morgan Fingerprint Bit Vector:** This high-dimensional binary representation transforms molecular topology into distinct machine-readable patterns evaluated by our classification layer.
@@ -143,4 +147,5 @@ with col_right:
             st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
 
     else:
+        st.warning("Awaiting biological structure input to initialize ML pipeline...")
         st.warning("Awaiting biological structure input to initialize ML pipeline...")
