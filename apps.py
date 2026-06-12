@@ -18,11 +18,7 @@ st.markdown("""
     .subtitle { font-size: 16px; text-align: center; color: #666666; margin-bottom: 25px; }
     .metric-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #FF4B4B; }
     </style>
-""", unsafe_content_type=True)
-
-# --- 2. HEADER BLOCK ---
-st.markdown("<div class='main-title'>🧬 BioActive-ML: Virtual Screening Pipeline</div>", unsafe_content_type=True)
-st.markdown("<div class='subtitle'>Dynamic UniProt Target Mapping & Machine Learning-Driven Bioactivity Inference</div>", unsafe_content_type=True)
+""", unsafe_allow_html=True)
 st.write("---")
 
 # --- 3. THE CENTERPIECE: DYNAMIC UNIPROT ID SEARCH BAR ---
