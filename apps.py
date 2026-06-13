@@ -89,7 +89,7 @@ st.markdown("""
 
 # --- 2. HEADER BLOCK ---
 st.markdown("<div class='main-title'>🧬 BioActive-ML</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Virtual Screening Platform • AI-Powered Bioactivity Prediction • Drug Discovery Acceleration</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Virtual Screening Platform | AI-Powered Bioactivity Prediction</div>", unsafe_allow_html=True)
 
 st.markdown("""
 ---
