@@ -88,7 +88,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 2. HEADER BLOCK ---
-st.markdown("<div class='main-title'>BioActive-ML</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>🧬 BioActive-ML</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>Virtual Screening Platform • AI-Powered Bioactivity Prediction • Drug Discovery Acceleration</div>", unsafe_allow_html=True)
 
 st.markdown("""
@@ -448,4 +448,3 @@ if mol is not None:
         """)
         st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
         st.caption(f"Total fingerprint length: {len(fp_array)} bits | Bits set (ON): {int(fp_array.sum())}")
-        st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
