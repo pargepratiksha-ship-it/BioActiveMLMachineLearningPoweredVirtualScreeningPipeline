@@ -88,7 +88,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- 2. HEADER BLOCK ---
-st.markdown("<div class='main-title'>🧬 BioActive-ML</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-title'>BioActive-ML</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>Virtual Screening Platform • AI-Powered Bioactivity Prediction • Drug Discovery Acceleration</div>", unsafe_allow_html=True)
 
 st.markdown("""
@@ -97,11 +97,8 @@ st.markdown("""
 This platform predicts whether chemical compounds and peptides will show biological activity against a target protein.
 Simply input your molecule, and our machine learning model will score its predicted bioactivity.
 
-**Quick Start:**
-1️⃣ Enter your target protein (UniProt ID) or use default  
-2️⃣ Paste a SMILES string or peptide sequence  
-3️⃣ Get instant bioactivity predictions and metrics  
-4️⃣ Explore model explanations and export results  
+**How it works:** Enter a target protein, submit a chemical structure, and receive bioactivity predictions with confidence metrics and detailed explanations.
+
 ---
 """)
 
@@ -201,7 +198,7 @@ def compute_fingerprint(mol):
 model_info = build_training_model()
 
 # --- 4. TARGET SELECTION ---
-st.subheader("🎯 1. Specify Biological Target via UniProt ID")
+st.subheader("1. Specify Biological Target via UniProt ID")
 
 uniprot_id = st.text_input("Enter UniProt ID:", value="P00533").strip().upper()
 target_seed_modifier = 0
@@ -211,13 +208,13 @@ if uniprot_id:
         result = fetch_uniprot_data(uniprot_id)
     if result["success"]:
         st.info(f"""
-        🧬 **Target Protein Named:** {result['name']}  
-        🌍 **Source Organism:** *{result['organism']}* | 🔬 **Functional Annotation:** {result['class']}
+        **Target Protein:** {result['name']}  
+        **Organism:** *{result['organism']}* | **Function:** {result['class']}
         """)
         target_seed_modifier = len(result['name'])
     else:
         st.warning(f"""
-        🌐 **Custom Registry Active:** Defaulting to exploratory screening matrix across generic pocket configurations [{uniprot_id}].
+        Unable to fetch UniProt data for {uniprot_id}. Using default configuration.
         """)
         target_seed_modifier = len(uniprot_id)
 
@@ -227,7 +224,7 @@ st.write("---")
 col_left, col_right = st.columns([1, 1], gap="large")
 
 with col_left:
-    st.subheader("🧪 2. Input Molecular Configuration")
+    st.subheader("2. Input Molecular Configuration")
     input_type = st.radio("Structural Representation Format:", ("Small Molecule (SMILES Notation)", "Peptide Sequence (FASTA Amino Acids)"))
     mol = None
 
@@ -269,7 +266,7 @@ with col_left:
                 st.success("✅ Sequence converted to molecule successfully!")
 
 with col_right:
-    st.subheader("🔮 3. Predictive Analytics Core")
+    st.subheader("3. Predictive Analytics & Results")
     if mol is not None:
         st.success("🔬 Chemical structural configuration loaded successfully!")
         mw = round(Chem.rdMolDescriptors.CalcExactMolWt(mol), 2)
@@ -290,7 +287,7 @@ with col_right:
         st.write("---")
         
         # Enhanced prediction results with cooler UI
-        st.subheader("🎯 Bioactivity Prediction Result")
+        st.subheader("Bioactivity Prediction Result")
         
         col_prob, col_gauge = st.columns([1, 1])
         with col_prob:
@@ -303,7 +300,7 @@ with col_right:
             st.balloons()
             st.markdown(f"""
             <div class='result-active'>
-                <h3>🚀 HIGH POTENCY CANDIDATE</h3>
+                <h3>HIGH POTENCY CANDIDATE</h3>
                 <p><strong>Status:</strong> Predicted to be <b>ACTIVE</b> against target {uniprot_id}</p>
                 <p><strong>Action:</strong> Recommended for experimental validation and wet-lab assay testing.</p>
                 <p><strong>Confidence:</strong> Very High ({round(active_prob * 100, 1)}%)</p>
@@ -312,7 +309,7 @@ with col_right:
         elif active_prob >= 0.40:
             st.markdown(f"""
             <div class='result-moderate'>
-                <h3>⚠️ MODERATE ACTIVITY</h3>
+                <h3>MODERATE ACTIVITY</h3>
                 <p><strong>Status:</strong> Predicted to show <b>MODERATE</b> activity against target {uniprot_id}</p>
                 <p><strong>Action:</strong> Consider structural modifications or scaffold optimization.</p>
                 <p><strong>Confidence:</strong> Medium ({round(active_prob * 100, 1)}%)</p>
@@ -321,7 +318,7 @@ with col_right:
         else:
             st.markdown(f"""
             <div class='result-inactive'>
-                <h3>❌ NEGLIGIBLE BIOACTIVITY</h3>
+                <h3>NEGLIGIBLE BIOACTIVITY</h3>
                 <p><strong>Status:</strong> Predicted to be <b>INACTIVE</b> against target {uniprot_id}</p>
                 <p><strong>Action:</strong> Consider redesign or alternative chemical series.</p>
                 <p><strong>Confidence:</strong> Low activity risk ({round(active_prob * 100, 1)}%)</p>
@@ -329,7 +326,7 @@ with col_right:
             """, unsafe_allow_html=True)
         
         # Bioactivity explanation
-        with st.expander("📚 How Does This Prediction Work?"):
+        with st.expander("How Does This Prediction Work?"):
             st.markdown("""
             ### Bioactivity Prediction Methodology
             
@@ -352,9 +349,9 @@ with col_right:
             - Applicability domain: The model works best on drug-like molecules with familiar scaffolds.
             
             **Next Steps:**
-            ✅ High potency candidates → prioritize for synthesis and testing  
-            ⚠️ Moderate activity → consider structure optimization  
-            ❌ Negligible activity → explore alternative chemical series  
+            • High potency candidates → prioritize for synthesis and testing  
+            • Moderate activity → consider structure optimization  
+            • Negligible activity → explore alternative chemical series  
             """)
         
         chart_data = pd.DataFrame({
@@ -369,7 +366,7 @@ st.write("---")
 
 # --- 6. RELIABILITY & VALIDATION DASHBOARD ---
 st.write("---")
-st.subheader("📊 4. Model Performance & Validation Metrics")
+st.subheader("4. Model Performance & Validation Metrics")
 st.markdown("""
 This dashboard shows the cross-validation performance of our Random Forest classifier on the demonstration dataset.
 Learn how reliable these predictions are based on the model's training metrics.
@@ -379,7 +376,6 @@ vm1, vm2, vm3, vm4 = st.columns(4)
 with vm1:
     st.markdown(f"""
     <div class='stat-card'>
-        <h3>📈</h3>
         <strong>ROC-AUC Score</strong><br>
         <span style='font-size:32px; color:#FF4B4B;'>{model_info['roc_auc']:.3f}</span><br>
         <small>Discriminatory Power</small>
@@ -388,7 +384,6 @@ with vm1:
 with vm2:
     st.markdown(f"""
     <div class='stat-card'>
-        <h3>🎯</h3>
         <strong>Accuracy</strong><br>
         <span style='font-size:32px; color:#00D9FF;'>{model_info['accuracy']:.1%}</span><br>
         <small>Prediction Consistency</small>
@@ -397,7 +392,6 @@ with vm2:
 with vm3:
     st.markdown(f"""
     <div class='stat-card'>
-        <h3>🎯</h3>
         <strong>MCC</strong><br>
         <span style='font-size:32px; color:#00FF66;'>{model_info['mcc']:.3f}</span><br>
         <small>Balanced Correlation</small>
@@ -406,14 +400,13 @@ with vm3:
 with vm4:
     st.markdown(f"""
     <div class='stat-card'>
-        <h3>🧪</h3>
         <strong>Training Samples</strong><br>
         <span style='font-size:32px; color:#FFB800;'>{model_info['samples']}</span><br>
         <small>Compounds Used</small>
     </div>
     """, unsafe_allow_html=True)
 
-with st.expander("📖 Understanding Model Metrics"):
+with st.expander("Understanding Model Metrics"):
     st.markdown(f"""
     ### Model Performance Explanation
     
@@ -438,17 +431,17 @@ with st.expander("📖 Understanding Model Metrics"):
     
 if mol is not None:
     st.write("---")
-    st.subheader("💾 Export & Advanced Options")
+    st.subheader("Export & Advanced Options")
     
     col_exp1, col_exp2 = st.columns(2)
     with col_exp1:
-        if st.button("📋 Copy SMILES to Clipboard"):
+        if st.button("Copy SMILES to Clipboard"):
             st.success("SMILES copied! (In production, would copy to clipboard)")
     with col_exp2:
-        if st.button("📊 Download Prediction Report"):
+        if st.button("Download Prediction Report"):
             st.success("Report generated! (In production, would download CSV/PDF)")
     
-    with st.expander("🔬 View Full Feature Vector"):
+    with st.expander("View Full Feature Vector"):
         st.markdown(f"""
         **Morgan Fingerprint (2048 bits):** First 40 bits shown  
         *This is the numerical representation used by the ML model to make predictions.*
