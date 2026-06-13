@@ -4,6 +4,9 @@ from rdkit.Chem import AllChem
 import numpy as np
 import pandas as pd
 import requests
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn.metrics import matthews_corrcoef
 
 # --- 1. WEB PAGE CONFIGURATION ---
 st.set_page_config(
@@ -50,12 +53,81 @@ def fetch_uniprot_data(uid):
             return {"success": True, "name": pref_name, "organism": organism, "class": protein_class}
         else:
             return {"success": False, "error": "ID not found in global database"}
-    except:
-        return {"success": False, "error": "Connection timeout"}
+    except requests.RequestException as exc:
+        return {"success": False, "error": f"Connection timeout: {exc}"}
+
+@st.cache_data(show_spinner=False)
+def build_training_model():
+    sample_smiles = [
+        # Active compounds
+        "CCOc1ccc2nc(S(N)(=O)=O)sc2c1",
+        "CC1=C(C(=O)NC(C)C)N(C)C2=CC=CC=C12",
+        "CC(=O)NCC1=CC=CC=C1",
+        "CCC(=O)N1CCCC1C(=O)O",
+        "CC1=C(C(=O)NC(CC2=CC=CC=C2)C)N(C)C2=CC=CC=C12",
+        # Inactive compounds
+        "CC(C)CC1=CC=CC=C1",
+        "CC(C)OC1=CC=CC=C1",
+        "CCCCC(=O)O",
+        "CCN(CC)CC",
+        "CCCCCC",
+        # Additional actives
+        "CC1=CN(C(=O)C2=CC=CC=C2)C=C1",
+        "CNC(=O)C1=CC=CC=C1",
+        "CC1=CN=CN1",
+        "CCOC(=O)C1=CN=CN1",
+        "CCN(CC)CCO",
+        # Additional inactives
+        "COC1=CC=CC=C1",
+        "CCC1=CC=CC=C1",
+        "CC(C)C(=O)O",
+        "CC1=CC=CC=C1O",
+        "CC(C)(C)O",
+    ]
+    labels = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    fingerprints = []
+    for smiles in sample_smiles:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            continue
+        fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048)
+        arr = np.zeros((2048,), dtype=np.uint8)
+        Chem.DataStructs.ConvertToNumpyArray(fp, arr)
+        fingerprints.append(arr)
+
+    X = np.vstack(fingerprints)
+    y = np.array(labels[: len(fingerprints)])
+
+    clf = RandomForestClassifier(n_estimators=200, random_state=42)
+    scores_acc = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
+    scores_auc = cross_val_score(clf, X, y, cv=5, scoring='roc_auc')
+    y_pred = cross_val_predict(clf, X, y, cv=5)
+    mcc = matthews_corrcoef(y, y_pred)
+    clf.fit(X, y)
+
+    return {
+        'model': clf,
+        'accuracy': float(np.mean(scores_acc)),
+        'roc_auc': float(np.mean(scores_auc)),
+        'mcc': float(mcc),
+        'samples': X.shape[0],
+    }
+
+@st.cache_data(show_spinner=False)
+def compute_fingerprint(mol):
+    fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048)
+    arr = np.zeros((2048,), dtype=np.uint8)
+    Chem.DataStructs.ConvertToNumpyArray(fp, arr)
+    return arr
+
+model_info = build_training_model()
 
 # --- 4. TARGET SELECTION ---
 st.subheader("🎯 1. Specify Biological Target via UniProt ID")
+
 uniprot_id = st.text_input("Enter UniProt ID:", value="P00533").strip().upper()
+target_seed_modifier = 0
 
 if uniprot_id:
     with st.spinner("Fetching live data from UniProt KB..."):
@@ -99,13 +171,10 @@ with col_right:
         st.success("🔬 Chemical structural configuration loaded successfully!")
         mw = round(Chem.rdMolDescriptors.CalcExactMolWt(mol), 2)
         heavy_atoms = mol.GetNumHeavyAtoms()
-        
-        fingerprint = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048)
-        fp_array = np.zeros((1,))
-        Chem.DataStructs.ConvertToNumpyArray(fingerprint, fp_array)
-        
-        np.random.seed(int(fp_array.sum() + target_seed_modifier)) 
-        active_prob = np.random.uniform(0.05, 0.98)
+
+        fp_array = compute_fingerprint(mol)
+        model = model_info["model"]
+        active_prob = float(model.predict_proba([fp_array])[0, 1])
         inactive_prob = 1.0 - active_prob
         
         m1, m2 = st.columns(2)
@@ -130,27 +199,27 @@ with col_right:
 
 st.write("---")
 
-# --- 6. NEW CRITICAL ADDITION: RELIABILITY & VALIDATION DASHBOARD ---
-st.subheader("📊 4. Cross-Validation & Reliability Metrics (Production Baseline)")
+# --- 6. RELIABILITY & VALIDATION DASHBOARD ---
+st.subheader("📊 4. Cross-Validation & Reliability Metrics")
 st.markdown("""
-This panel outlines the cross-validation performance of our underlying Random Forest / Gradient Boosting classification architecture trained on historical experimental binding data from the ChEMBL database.
+This panel summarizes the Random Forest classifier performance on a small demonstration dataset and provides an interpretive view into model reliability.
 """)
 
 vm1, vm2, vm3, vm4 = st.columns(4)
 with vm1:
-    st.markdown("<div class='stat-card'><strong>📈 ROC-AUC Score</strong><br><span style='font-size:24px; color:#FF4B4B;'>0.912</span><br><small>Discriminatory Power</small></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='stat-card'><strong>📈 ROC-AUC Score</strong><br><span style='font-size:24px; color:#FF4B4B;'>{model_info['roc_auc']:.3f}</span><br><small>Discriminatory Power</small></div>", unsafe_allow_html=True)
 with vm2:
-    st.markdown("<div class='stat-card'><strong>🎯 Matthews (MCC)</strong><br><span style='font-size:24px; color:#00F0FF;'>+0.784</span><br><small>Robustness on Imbalances</small></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='stat-card'><strong>🎯 Accuracy</strong><br><span style='font-size:24px; color:#00F0FF;'>{model_info['accuracy']:.2%}</span><br><small>Prediction Consistency</small></div>", unsafe_allow_html=True)
 with vm3:
-    st.markdown("<div class='stat-card'><strong>🧪 Precision Core</strong><br><span style='font-size:24px; color:#00FF66;'>89.4%</span><br><small>True Positive Confidence</small></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='stat-card'><strong>🎯 MCC</strong><br><span style='font-size:24px; color:#00FF66;'>{model_info['mcc']:.3f}</span><br><small>Correlation quality</small></div>", unsafe_allow_html=True)
 with vm4:
-    st.markdown("<div class='stat-card'><strong>🛡️ Applicability Domain</strong><br><span style='font-size:24px; color:#FFB800;'>Tanimoto &ge; 0.50</span><br><small>Reliability Threshold</small></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='stat-card'><strong>🧪 Training Samples</strong><br><span style='font-size:24px; color:#FFB800;'>{model_info['samples']}</span><br><small>Example compound set</small></div>", unsafe_allow_html=True)
 
 with st.expander("🔬 Technical Context on Validation Metrics"):
     st.markdown("""
-    * **ROC-AUC (0.912):** Indicates a 91.2% probability that the model will rank a randomly chosen active compound higher than a randomly chosen inactive decoy.
-    * **Matthews Correlation Coefficient (+0.784):** Measures prediction quality across true/false positives and negatives. A score approaching +1.0 balances out standard skewing caused by high counts of inactive decoys in biological screens.
-    * **Applicability Domain Filter:** Structural features are checked against training topography. Assays mapping below a 0.5 Tanimoto similarity threshold flag higher prediction variance.
+    * **ROC-AUC:** Evaluates how well the classifier separates active from inactive compounds.
+    * **Matthews Correlation Coefficient (MCC):** Measures prediction quality across classes, especially useful for small or imbalanced datasets.
+    * **Applicability Domain:** The app currently uses a demonstration dataset; predictions are illustrative and should be validated with real assay data.
     """)
     
 if mol is not None:
