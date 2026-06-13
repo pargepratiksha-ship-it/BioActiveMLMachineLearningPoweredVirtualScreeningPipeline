@@ -17,16 +17,93 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    .main-title { font-size: 40px; font-weight: 800; color: #FF4B4B; text-align: center; margin-bottom: 5px; }
-    .subtitle { font-size: 16px; text-align: center; color: #888888; margin-bottom: 25px; }
-    .stat-card { background-color: #262730; padding: 15px; border-radius: 8px; border: 1px solid #464646; text-align: center; }
+    .main-title { 
+        font-size: 48px; font-weight: 900; 
+        background: linear-gradient(135deg, #FF4B4B 0%, #FF69B4 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-align: center; 
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+    .subtitle { 
+        font-size: 18px; text-align: center; 
+        color: #00D9FF; 
+        margin-bottom: 30px;
+        font-weight: 600;
+    }
+    .stat-card { 
+        background: linear-gradient(135deg, #1a1f35 0%, #262a47 100%);
+        padding: 20px; 
+        border-radius: 12px; 
+        border: 2px solid #00D9FF;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 217, 255, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 217, 255, 0.2);
+    }
+    .result-active {
+        background: linear-gradient(135deg, rgba(0, 255, 102, 0.1) 0%, rgba(0, 255, 102, 0.05) 100%);
+        border: 2px solid #00FF66;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 4px 20px rgba(0, 255, 102, 0.15);
+    }
+    .result-inactive {
+        background: linear-gradient(135deg, rgba(255, 75, 75, 0.1) 0%, rgba(255, 75, 75, 0.05) 100%);
+        border: 2px solid #FF4B4B;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 4px 20px rgba(255, 75, 75, 0.15);
+    }
+    .result-moderate {
+        background: linear-gradient(135deg, rgba(255, 184, 0, 0.1) 0%, rgba(255, 184, 0, 0.05) 100%);
+        border: 2px solid #FFB800;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 4px 20px rgba(255, 184, 0, 0.15);
+    }
+    .explanation-box {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2a1f4d 100%);
+        border-left: 4px solid #00D9FF;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-size: 14px;
+        line-height: 1.8;
+    }
+    .confidence-bar {
+        height: 12px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #00FF66 0%, #FFB800 50%, #FF4B4B 100%);
+        box-shadow: 0 2px 8px rgba(0, 217, 255, 0.2);
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # --- 2. HEADER BLOCK ---
-st.markdown("<div class='main-title'>🧬 BioActive-ML: Virtual Screening Pipeline</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Dynamic UniProt Target Mapping & Machine Learning-Driven Bioactivity Inference</div>", unsafe_allow_html=True)
-st.write("---")
+st.markdown("<div class='main-title'>🧬 BioActive-ML</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Virtual Screening Platform • AI-Powered Bioactivity Prediction • Drug Discovery Acceleration</div>", unsafe_allow_html=True)
+
+st.markdown("""
+---
+### Welcome to BioActive-ML
+This platform predicts whether chemical compounds and peptides will show biological activity against a target protein.
+Simply input your molecule, and our machine learning model will score its predicted bioactivity.
+
+**Quick Start:**
+1️⃣ Enter your target protein (UniProt ID) or use default  
+2️⃣ Paste a SMILES string or peptide sequence  
+3️⃣ Get instant bioactivity predictions and metrics  
+4️⃣ Explore model explanations and export results  
+---
+""")
 
 # --- 3. LIVE UNIPROT API FETCHING FUNCTION ---
 def fetch_uniprot_data(uid):
@@ -155,15 +232,41 @@ with col_left:
     mol = None
 
     if input_type == "Small Molecule (SMILES Notation)":
-        smiles_input = st.text_input("SMILES String:", "CC(=O)OC1=CC=CC=C1C(=O)O")
+        st.markdown("""
+        **SMILES Format:** Simplified Molecular Input Line Entry System  
+        *Example active compounds:*
+        - Aspirin: `CC(=O)Oc1ccccc1C(=O)O`
+        - Caffeine: `CN1C=NC2=C1C(=O)N(C(=O)N2C)C`
+        """)
+        smiles_input = st.text_input(
+            "Enter SMILES String:", 
+            value="CC(=O)OC1=CC=CC=C1C(=O)O",
+            help="Paste a valid SMILES string or use one of the examples above"
+        )
         if smiles_input:
             mol = Chem.MolFromSmiles(smiles_input)
-            if mol is None: st.error("❌ Invalid SMILES string syntax.")
+            if mol is None: 
+                st.error("❌ Invalid SMILES syntax. Please check the string and try again.")
+            else:
+                st.success("✅ SMILES parsed successfully!")
     else:
-        peptide_input = st.text_input("Amino Acid Chain:", "SSMAGAFDIG")
+        st.markdown("""
+        **Peptide Format:** Single-letter amino acid codes  
+        *Example sequences:*
+        - Alanine-Glycine-Lysine: `AGK`
+        - Sample peptide: `SSMAGAFDIG`
+        """)
+        peptide_input = st.text_input(
+            "Enter Amino Acid Chain:", 
+            value="SSMAGAFDIG",
+            help="Use standard single-letter amino acid codes (A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y)"
+        )
         if peptide_input:
             mol = Chem.MolFromSequence(peptide_input.upper())
-            if mol is None: st.error("❌ Invalid sequence characters.")
+            if mol is None: 
+                st.error("❌ Invalid amino acid sequence. Please use standard single-letter codes.")
+            else:
+                st.success("✅ Sequence converted to molecule successfully!")
 
 with col_right:
     st.subheader("🔮 3. Predictive Analytics Core")
@@ -177,51 +280,179 @@ with col_right:
         active_prob = float(model.predict_proba([fp_array])[0, 1])
         inactive_prob = 1.0 - active_prob
         
+        # Display molecular properties
         m1, m2 = st.columns(2)
-        m1.metric("Molecular Weight", f"{mw} Da")
-        m2.metric("Heavy Atoms", f"{heavy_atoms}")
+        with m1:
+            st.metric("Molecular Weight", f"{mw} Da", delta=None)
+        with m2:
+            st.metric("Heavy Atoms Count", f"{heavy_atoms}", delta=None)
         
         st.write("---")
-        st.metric(label=f"Binding Probability against Target ID [{uniprot_id}]", value=f"{round(active_prob * 100, 2)}%")
         
+        # Enhanced prediction results with cooler UI
+        st.subheader("🎯 Bioactivity Prediction Result")
+        
+        col_prob, col_gauge = st.columns([1, 1])
+        with col_prob:
+            st.markdown(f"### **Binding Probability: {round(active_prob * 100, 1)}%**")
+            st.markdown(f"<div class='confidence-bar'></div>", unsafe_allow_html=True)
+            st.caption(f"Confidence: {round(active_prob * 100, 2)}% active | {round(inactive_prob * 100, 2)}% inactive")
+        
+        # Color-coded result boxes
         if active_prob >= 0.70:
             st.balloons()
-            st.success("🚀 **High Potency Candidate!** Recommended for wet-lab assay verification.")
+            st.markdown(f"""
+            <div class='result-active'>
+                <h3>🚀 HIGH POTENCY CANDIDATE</h3>
+                <p><strong>Status:</strong> Predicted to be <b>ACTIVE</b> against target {uniprot_id}</p>
+                <p><strong>Action:</strong> Recommended for experimental validation and wet-lab assay testing.</p>
+                <p><strong>Confidence:</strong> Very High ({round(active_prob * 100, 1)}%)</p>
+            </div>
+            """, unsafe_allow_html=True)
         elif active_prob >= 0.40:
-            st.warning("⚠️ **Moderate Activity.** Structural optimization suggested.")
+            st.markdown(f"""
+            <div class='result-moderate'>
+                <h3>⚠️ MODERATE ACTIVITY</h3>
+                <p><strong>Status:</strong> Predicted to show <b>MODERATE</b> activity against target {uniprot_id}</p>
+                <p><strong>Action:</strong> Consider structural modifications or scaffold optimization.</p>
+                <p><strong>Confidence:</strong> Medium ({round(active_prob * 100, 1)}%)</p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.error("❌ **Negligible Bioactivity.** Morphologically incompatible.")
+            st.markdown(f"""
+            <div class='result-inactive'>
+                <h3>❌ NEGLIGIBLE BIOACTIVITY</h3>
+                <p><strong>Status:</strong> Predicted to be <b>INACTIVE</b> against target {uniprot_id}</p>
+                <p><strong>Action:</strong> Consider redesign or alternative chemical series.</p>
+                <p><strong>Confidence:</strong> Low activity risk ({round(active_prob * 100, 1)}%)</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Bioactivity explanation
+        with st.expander("📚 How Does This Prediction Work?"):
+            st.markdown("""
+            ### Bioactivity Prediction Methodology
             
-        chart_data = pd.DataFrame({'Inference Target': ['Active Variant', 'Inactive Orientation'], 'Confidence Score': [active_prob, inactive_prob]})
-        st.bar_chart(data=chart_data, x='Inference Target', y='Confidence Score')
+            **What we're predicting:** Whether this compound will bind and show biological activity against your target protein.
+            
+            **How it works:**
+            1. **Molecular Fingerprinting:** Your compound is converted into a Morgan fingerprint (2048 bits) — a numerical representation capturing its 2D chemical structure.
+            2. **Machine Learning Model:** A Random Forest classifier (trained on active/inactive compounds) analyzes this fingerprint.
+            3. **Probability Output:** The model outputs the probability that your compound is "active" (will bind) vs "inactive" (won't bind).
+            
+            **Why this is useful:**
+            - **Virtual Screening:** Quickly filter thousands of compounds before expensive lab synthesis.
+            - **Lead Optimization:** Identify which structural changes improve activity.
+            - **Cost Savings:** Predict bioactivity before committing to wet-lab experiments.
+            
+            **Limitations:**
+            - This model is trained on a demonstration dataset (not real ChEMBL data).
+            - Results should always be validated experimentally.
+            - The prediction is based on 2D structure; 3D binding and off-target effects are not modeled.
+            - Applicability domain: The model works best on drug-like molecules with familiar scaffolds.
+            
+            **Next Steps:**
+            ✅ High potency candidates → prioritize for synthesis and testing  
+            ⚠️ Moderate activity → consider structure optimization  
+            ❌ Negligible activity → explore alternative chemical series  
+            """)
+        
+        chart_data = pd.DataFrame({
+            'Prediction': ['Likely Active', 'Likely Inactive'], 
+            'Probability': [active_prob, inactive_prob]
+        })
+        st.bar_chart(data=chart_data, x='Prediction', y='Probability')
     else:
         st.warning("Awaiting biological structure input to initialize ML pipeline...")
 
 st.write("---")
 
 # --- 6. RELIABILITY & VALIDATION DASHBOARD ---
-st.subheader("📊 4. Cross-Validation & Reliability Metrics")
+st.write("---")
+st.subheader("📊 4. Model Performance & Validation Metrics")
 st.markdown("""
-This panel summarizes the Random Forest classifier performance on a small demonstration dataset and provides an interpretive view into model reliability.
+This dashboard shows the cross-validation performance of our Random Forest classifier on the demonstration dataset.
+Learn how reliable these predictions are based on the model's training metrics.
 """)
 
 vm1, vm2, vm3, vm4 = st.columns(4)
 with vm1:
-    st.markdown(f"<div class='stat-card'><strong>📈 ROC-AUC Score</strong><br><span style='font-size:24px; color:#FF4B4B;'>{model_info['roc_auc']:.3f}</span><br><small>Discriminatory Power</small></div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='stat-card'>
+        <h3>📈</h3>
+        <strong>ROC-AUC Score</strong><br>
+        <span style='font-size:32px; color:#FF4B4B;'>{model_info['roc_auc']:.3f}</span><br>
+        <small>Discriminatory Power</small>
+    </div>
+    """, unsafe_allow_html=True)
 with vm2:
-    st.markdown(f"<div class='stat-card'><strong>🎯 Accuracy</strong><br><span style='font-size:24px; color:#00F0FF;'>{model_info['accuracy']:.2%}</span><br><small>Prediction Consistency</small></div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='stat-card'>
+        <h3>🎯</h3>
+        <strong>Accuracy</strong><br>
+        <span style='font-size:32px; color:#00D9FF;'>{model_info['accuracy']:.1%}</span><br>
+        <small>Prediction Consistency</small>
+    </div>
+    """, unsafe_allow_html=True)
 with vm3:
-    st.markdown(f"<div class='stat-card'><strong>🎯 MCC</strong><br><span style='font-size:24px; color:#00FF66;'>{model_info['mcc']:.3f}</span><br><small>Correlation quality</small></div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='stat-card'>
+        <h3>🎯</h3>
+        <strong>MCC</strong><br>
+        <span style='font-size:32px; color:#00FF66;'>{model_info['mcc']:.3f}</span><br>
+        <small>Balanced Correlation</small>
+    </div>
+    """, unsafe_allow_html=True)
 with vm4:
-    st.markdown(f"<div class='stat-card'><strong>🧪 Training Samples</strong><br><span style='font-size:24px; color:#FFB800;'>{model_info['samples']}</span><br><small>Example compound set</small></div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='stat-card'>
+        <h3>🧪</h3>
+        <strong>Training Samples</strong><br>
+        <span style='font-size:32px; color:#FFB800;'>{model_info['samples']}</span><br>
+        <small>Compounds Used</small>
+    </div>
+    """, unsafe_allow_html=True)
 
-with st.expander("🔬 Technical Context on Validation Metrics"):
-    st.markdown("""
-    * **ROC-AUC:** Evaluates how well the classifier separates active from inactive compounds.
-    * **Matthews Correlation Coefficient (MCC):** Measures prediction quality across classes, especially useful for small or imbalanced datasets.
-    * **Applicability Domain:** The app currently uses a demonstration dataset; predictions are illustrative and should be validated with real assay data.
+with st.expander("📖 Understanding Model Metrics"):
+    st.markdown(f"""
+    ### Model Performance Explanation
+    
+    **ROC-AUC Score ({model_info['roc_auc']:.3f})**
+    - Measures the model's ability to discriminate between active and inactive compounds
+    - Range: 0.0 (random) to 1.0 (perfect)
+    - Our model has a {model_info['roc_auc']:.1%} chance of ranking a random active higher than a random inactive
+    
+    **Accuracy ({model_info['accuracy']:.1%})**
+    - Percentage of correct predictions (both active and inactive)
+    - Shows how often the model predicts the right class
+    
+    **Matthews Correlation Coefficient ({model_info['mcc']:.3f})**
+    - Balances true/false positives and negatives
+    - Works well for imbalanced datasets
+    - Range: -1 (all wrong) to +1 (all correct), 0 (random)
+    
+    **Training Samples ({model_info['samples']})**
+    - Small demonstration dataset
+    - Real-world models use thousands of compounds from sources like ChEMBL
     """)
     
 if mol is not None:
-    with st.expander("📊 View Pipeline Feature Vector (Cheminformatics Pipeline)"):
+    st.write("---")
+    st.subheader("💾 Export & Advanced Options")
+    
+    col_exp1, col_exp2 = st.columns(2)
+    with col_exp1:
+        if st.button("📋 Copy SMILES to Clipboard"):
+            st.success("SMILES copied! (In production, would copy to clipboard)")
+    with col_exp2:
+        if st.button("📊 Download Prediction Report"):
+            st.success("Report generated! (In production, would download CSV/PDF)")
+    
+    with st.expander("🔬 View Full Feature Vector"):
+        st.markdown(f"""
+        **Morgan Fingerprint (2048 bits):** First 40 bits shown  
+        *This is the numerical representation used by the ML model to make predictions.*
+        """)
+        st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
+        st.caption(f"Total fingerprint length: {len(fp_array)} bits | Bits set (ON): {int(fp_array.sum())}")
         st.code(str(list(fp_array[:40]))[:-1] + ", ...]")
